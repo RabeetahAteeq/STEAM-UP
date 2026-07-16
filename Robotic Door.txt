@@ -1,0 +1,25 @@
+#include <Servo.h>
+
+Servo doorServo;
+
+const int irPin = 8;     // IR sensor output pin
+const int servoPin = 9;  // Servo signal pin
+
+void setup() {
+  pinMode(irPin, INPUT);
+  doorServo.attach(servoPin);
+
+  doorServo.write(0);    // Door closed
+}
+
+void loop() {
+  int irState = digitalRead(irPin);
+
+  if (irState == LOW) {   // Object detected (most IR sensors give LOW when detecting)
+    doorServo.write(90);  // Open door
+    delay(3000);          // Keep door open for 3 seconds
+  }
+  else {
+    doorServo.write(0);   // Close door
+  }
+}
