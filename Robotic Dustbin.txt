@@ -1,0 +1,80 @@
+#include <Servo.h>
+
+Servo dustbin;
+
+const int trigPin = 7;
+const int echoPin = 6;
+const int servoPin = 9;
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  dustbin.attach(servoPin);
+  dustbin.write(0);   // Lid closed
+
+  Serial.begin(9600);
+}
+
+int getDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH, 30000);
+
+  if (duration == 0)
+    return -1;
+
+  return duration * 0.034 / 2;
+}
+
+void loop() {
+
+  int distance = getDistance();
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  if (distance > 0 && distance <= 15) {
+
+    dustbin.write(90);
+    Serial.println("Lid Open");
+
+    while (true) {
+
+      distance = getDistance();
+
+      // Hand still present
+      if (distance > 0 && distance <= 15) {
+        delay(100);
+        continue;
+      }
+
+      // Hand removed → wait 3 seconds
+      unsigned long startTime = millis();
+
+      while (millis() - startTime < 3000) {
+
+        distance = getDistance();
+
+        // Hand came back
+        if (distance > 0 && distance <= 15) {
+          startTime = millis(); // restart timer
+        }
+
+        delay(100);
+      }
+
+      dustbin.write(0);
+      Serial.println("Lid Closed");
+      break;
+    }
+  }
+
+  delay(100);
+}
